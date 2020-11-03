@@ -2,24 +2,44 @@ package service;
 
 import model.Customer;
 
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class CustomerServiceImpl implements ICustomerService {
-    static Map<Integer,Customer> customers;
-    static {
-        customers=new HashMap<>();
-        customers.put(1,new Customer(1,"Chi","Ha Noi"));
-        customers.put(2,new Customer(2,"Huyen","Ha Noi"));
-        customers.put(3,new Customer(3,"Son","Ha Noi"));
-        customers.put(4,new Customer(4,"Hoang","Ha Noi"));
-        customers.put(5,new Customer(5,"THanh","Ha Noi"));
+    List<Customer> customers=new ArrayList<>();
+    Connection getConnect(){
+        Connection connection=null;
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            connection= DriverManager.getConnection("jdbc:mysql://localhost:3306/c0720i2?serverTimezone=UTC","test","test");
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return connection;
     }
     @Override
     public List<Customer> findAll() {
-        return new ArrayList<>(customers.values());
+
+        String sql="select * from customer";
+        Connection connection=getConnect();
+        try {
+            Statement statement=connection.createStatement();
+            ResultSet rs=statement.executeQuery(sql);
+            while (rs.next()){
+                int id=rs.getInt(1);
+                String name=rs.getString(2);
+                String address=rs.getString(3);
+                customers.add(new Customer(id,name,address));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return customers;
     }
 
     @Override
@@ -29,6 +49,18 @@ public class CustomerServiceImpl implements ICustomerService {
 
     @Override
     public void save(Customer customer) {
-        customers.put(customer.getId(), customer);
+        Connection connection=getConnect();
+        String sql="insert into customer values (?,?,?)";
+        try {
+            PreparedStatement ps=connection.prepareStatement(sql);
+            ps.setInt(1,customer.getId());
+            ps.setString(2,customer.getName());
+            ps.setString(3,customer.getAddress());
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+       // customers.add(customer);
     }
 }
